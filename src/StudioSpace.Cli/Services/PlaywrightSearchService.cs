@@ -45,6 +45,7 @@ public sealed class PlaywrightSearchService : ISearchService
         {
             ("Kijiji", SearchKijiji),
             ("Spacelist", SearchSpacelist),
+            ("Craigslist", SearchCraigslist),
         };
 
         foreach (var (name, search) in searches)
@@ -74,12 +75,57 @@ public sealed class PlaywrightSearchService : ISearchService
         try
         {
             // c40 = Commercial & Office Space category
+            // Search photography-specific terms plus general commercial/warehouse/studio in major GTA regions
             var urls = new[]
             {
-                "https://www.kijiji.ca/b-commercial-office-space/mississauga-peel-region/studio+space/k0c40l1700276",
-                "https://www.kijiji.ca/b-commercial-office-space/mississauga-peel-region/photography/k0c40l1700276",
+                // Toronto – photography-specific
                 "https://www.kijiji.ca/b-commercial-office-space/city-of-toronto/photography+studio/k0c40l1700273",
-                "https://www.kijiji.ca/b-commercial-office-space/mississauga-peel-region/commercial+space/k0c40l1700276",
+                "https://www.kijiji.ca/b-commercial-office-space/city-of-toronto/photo+studio/k0c40l1700273",
+                "https://www.kijiji.ca/b-commercial-office-space/city-of-toronto/photography/k0c40l1700273",
+                // Toronto – broader studio / creative / space terms
+                "https://www.kijiji.ca/b-commercial-office-space/city-of-toronto/creative+studio/k0c40l1700273",
+                "https://www.kijiji.ca/b-commercial-office-space/city-of-toronto/studio+space/k0c40l1700273",
+                "https://www.kijiji.ca/b-commercial-office-space/city-of-toronto/studio+rental/k0c40l1700273",
+                "https://www.kijiji.ca/b-commercial-office-space/city-of-toronto/studio+for+rent/k0c40l1700273",
+                "https://www.kijiji.ca/b-commercial-office-space/city-of-toronto/warehouse/k0c40l1700273",
+                "https://www.kijiji.ca/b-commercial-office-space/city-of-toronto/loft/k0c40l1700273",
+                "https://www.kijiji.ca/b-commercial-office-space/city-of-toronto/industrial+unit/k0c40l1700273",
+                "https://www.kijiji.ca/b-commercial-office-space/city-of-toronto/production+space/k0c40l1700273",
+                "https://www.kijiji.ca/b-commercial-office-space/city-of-toronto/commercial+unit/k0c40l1700273",
+                // Mississauga / Peel
+                "https://www.kijiji.ca/b-commercial-office-space/mississauga-peel-region/photography+studio/k0c40l1700276",
+                "https://www.kijiji.ca/b-commercial-office-space/mississauga-peel-region/studio+space/k0c40l1700276",
+                "https://www.kijiji.ca/b-commercial-office-space/mississauga-peel-region/warehouse/k0c40l1700276",
+                "https://www.kijiji.ca/b-commercial-office-space/mississauga-peel-region/industrial+unit/k0c40l1700276",
+                "https://www.kijiji.ca/b-commercial-office-space/mississauga-peel-region/commercial+unit/k0c40l1700276",
+                // York Region (Markham, Vaughan, Richmond Hill)
+                "https://www.kijiji.ca/b-commercial-office-space/markham-york-region/photography+studio/k0c40l1700274",
+                "https://www.kijiji.ca/b-commercial-office-space/markham-york-region/studio+space/k0c40l1700274",
+                "https://www.kijiji.ca/b-commercial-office-space/markham-york-region/warehouse/k0c40l1700274",
+                "https://www.kijiji.ca/b-commercial-office-space/markham-york-region/industrial+unit/k0c40l1700274",
+                "https://www.kijiji.ca/b-commercial-office-space/markham-york-region/commercial+unit/k0c40l1700274",
+                // Halton (Oakville, Burlington)
+                "https://www.kijiji.ca/b-commercial-office-space/oakville-halton-region/studio+space/k0c40l1700277",
+                "https://www.kijiji.ca/b-commercial-office-space/oakville-halton-region/warehouse/k0c40l1700277",
+                "https://www.kijiji.ca/b-commercial-office-space/oakville-halton-region/commercial+unit/k0c40l1700277",
+                // Hamilton
+                "https://www.kijiji.ca/b-commercial-office-space/hamilton/studio+space/k0c40l1700242",
+                "https://www.kijiji.ca/b-commercial-office-space/hamilton/warehouse/k0c40l1700242",
+                "https://www.kijiji.ca/b-commercial-office-space/hamilton/industrial+unit/k0c40l1700242",
+                "https://www.kijiji.ca/b-commercial-office-space/hamilton/commercial+unit/k0c40l1700242",
+                // Durham (Oshawa, Whitby, Ajax)
+                "https://www.kijiji.ca/b-commercial-office-space/oshawa-durham-region/studio+space/k0c40l1700275",
+                "https://www.kijiji.ca/b-commercial-office-space/oshawa-durham-region/warehouse/k0c40l1700275",
+                "https://www.kijiji.ca/b-commercial-office-space/oshawa-durham-region/commercial+unit/k0c40l1700275",
+                // Kitchener-Waterloo
+                "https://www.kijiji.ca/b-commercial-office-space/kitchener-waterloo/studio+space/k0c40l1700212",
+                "https://www.kijiji.ca/b-commercial-office-space/kitchener-waterloo/warehouse/k0c40l1700212",
+                // Ontario-wide catch-all
+                "https://www.kijiji.ca/b-commercial-office-space/ontario/photography+studio/k0c40l9004",
+                "https://www.kijiji.ca/b-commercial-office-space/ontario/photo+studio/k0c40l9004",
+                "https://www.kijiji.ca/b-commercial-office-space/ontario/creative+studio/k0c40l9004",
+                "https://www.kijiji.ca/b-commercial-office-space/ontario/warehouse+space/k0c40l9004",
+                "https://www.kijiji.ca/b-commercial-office-space/ontario/industrial+unit/k0c40l9004",
             };
 
             foreach (var url in urls)
@@ -131,10 +177,16 @@ public sealed class PlaywrightSearchService : ISearchService
                     var urlStr = r.GetValueOrDefault("u", "");
                     if (string.IsNullOrWhiteSpace(title) || listings.Any(l => l.ListingUrl == urlStr)) continue;
 
-                    // Filter: only commercial spaces
+                    // Filter: only commercial spaces suitable for photography
                     if (IsResidentialListing(title, urlStr))
                     {
                         _logger.LogDebug("Skipping residential listing: {Title}", title);
+                        continue;
+                    }
+
+                    if (!IsPhotographySuitable(title))
+                    {
+                        _logger.LogDebug("Skipping non-photography listing: {Title}", title);
                         continue;
                     }
 
@@ -185,11 +237,21 @@ public sealed class PlaywrightSearchService : ISearchService
 
         try
         {
-            // Spacelist.ca is a Canadian commercial real estate search engine
+            // Spacelist.ca is a Canadian commercial real estate search engine – photography focused
             var urls = new[]
             {
+                "https://www.spacelist.ca/search?type=lease&location=Toronto+ON&keywords=photography+studio",
+                "https://www.spacelist.ca/search?type=sale&location=Toronto+ON&keywords=photography+studio",
+                "https://www.spacelist.ca/search?type=lease&location=Toronto+ON&keywords=studio",
+                "https://www.spacelist.ca/search?type=lease&location=Mississauga+ON&keywords=photography+studio",
+                "https://www.spacelist.ca/search?type=sale&location=Mississauga+ON&keywords=photography+studio",
                 "https://www.spacelist.ca/search?type=lease&location=Mississauga+ON&keywords=studio",
-                "https://www.spacelist.ca/search?type=sale&location=Mississauga+ON&keywords=studio",
+                "https://www.spacelist.ca/search?type=lease&location=Hamilton+ON&keywords=studio",
+                "https://www.spacelist.ca/search?type=lease&location=Markham+ON&keywords=studio",
+                "https://www.spacelist.ca/search?type=lease&location=Vaughan+ON&keywords=studio",
+                "https://www.spacelist.ca/search?type=lease&location=Brampton+ON&keywords=studio",
+                "https://www.spacelist.ca/search?type=lease&location=Oakville+ON&keywords=studio",
+                "https://www.spacelist.ca/search?type=lease&location=Kitchener+ON&keywords=studio",
             };
 
             int urlIdx = 0;
@@ -244,6 +306,13 @@ public sealed class PlaywrightSearchService : ISearchService
                         var urlStr = r.GetValueOrDefault("u", "");
                         if (listings.Any(l => l.ListingUrl == urlStr)) continue;
 
+                        var title = r.GetValueOrDefault("t", "");
+                        if (!IsPhotographySuitable(title))
+                        {
+                            _logger.LogDebug("Skipping non-photography Spacelist listing: {Title}", title);
+                            continue;
+                        }
+
                         var price = r.GetValueOrDefault("p", "");
                         var listing = new StudioListing
                         {
@@ -284,6 +353,130 @@ public sealed class PlaywrightSearchService : ISearchService
                 catch (Exception ex)
                 {
                     _logger.LogDebug(ex, "Could not scrape Spacelist detail for {Url}", listing.ListingUrl);
+                }
+            }
+
+            return listings;
+        }
+        finally
+        {
+            await page.CloseAsync();
+        }
+    }
+
+    private async Task<List<StudioListing>> SearchCraigslist(IBrowserContext context, string postalCode, string debugDir, CancellationToken ct)
+    {
+        _logger.LogInformation("Searching Craigslist Toronto...");
+        var listings = new List<StudioListing>();
+        var page = await context.NewPageAsync();
+
+        try
+        {
+            // off = offices & commercial, search both Toronto and Hamilton Craigslist
+            var urls = new[]
+            {
+                "https://toronto.craigslist.org/search/off?query=photography+studio",
+                "https://toronto.craigslist.org/search/off?query=photo+studio",
+                "https://toronto.craigslist.org/search/off?query=creative+studio",
+                "https://toronto.craigslist.org/search/off?query=studio+space",
+                "https://toronto.craigslist.org/search/off?query=warehouse+space",
+                "https://toronto.craigslist.org/search/off?query=industrial+unit",
+                "https://toronto.craigslist.org/search/off?query=loft+space",
+                "https://toronto.craigslist.org/search/off?query=commercial+space",
+                "https://hamilton.craigslist.org/search/off?query=studio+space",
+                "https://hamilton.craigslist.org/search/off?query=warehouse+space",
+                "https://hamilton.craigslist.org/search/off?query=commercial+space",
+            };
+
+            int urlIdx = 0;
+            foreach (var url in urls)
+            {
+                urlIdx++;
+                try
+                {
+                    await page.GotoAsync(url, new PageGotoOptions
+                    {
+                        WaitUntil = WaitUntilState.DOMContentLoaded,
+                        Timeout = 20000
+                    });
+                    await page.WaitForTimeoutAsync(2000);
+
+                    await page.ScreenshotAsync(new PageScreenshotOptions
+                    {
+                        Path = Path.Combine(debugDir, $"craigslist_{urlIdx}.png"),
+                        FullPage = true
+                    });
+
+                    var json = await page.EvaluateAsync<JsonElement>(@"() => {
+                        const results = [];
+                        const rows = document.querySelectorAll('.cl-search-result, li.result-row, .result-info');
+                        for (const row of rows) {
+                            try {
+                                const link = row.querySelector('a[href*=""craigslist""], a.posting-title, a.result-title, a[href]');
+                                const titleEl = row.querySelector('.posting-title .label, .result-title, a .label, .title');
+                                const priceEl = row.querySelector('.priceinfo, .result-price, .price');
+                                const locEl = row.querySelector('.meta .subreddit, .result-hood, .nearby');
+                                const imgEl = row.querySelector('img[src*=""http""]');
+                                if (!link && !titleEl) continue;
+                                const href = link ? (link.getAttribute('href') || '') : '';
+                                const title = titleEl ? (titleEl.innerText || titleEl.textContent || '') : (link ? link.innerText : '');
+                                results.push({
+                                    u: href.startsWith('http') ? href : ('https://toronto.craigslist.org' + href),
+                                    t: title.trim(),
+                                    p: priceEl ? priceEl.innerText.trim() : '',
+                                    l: locEl ? locEl.innerText.trim() : 'GTA, Ontario',
+                                    i: imgEl ? (imgEl.getAttribute('src') || '') : ''
+                                });
+                            } catch(e) {}
+                        }
+                        return results;
+                    }");
+
+                    var results = ParseJsonArray(json);
+                    _logger.LogInformation("Craigslist URL returned {Count} results", results.Count);
+
+                    foreach (var r in results.Take(_options.MaxListings))
+                    {
+                        var title = r.GetValueOrDefault("t", "");
+                        var urlStr = r.GetValueOrDefault("u", "");
+                        if (string.IsNullOrWhiteSpace(title) || listings.Any(l => l.ListingUrl == urlStr)) continue;
+
+                        if (IsResidentialListing(title, urlStr)) continue;
+                        if (!IsPhotographySuitable(title)) continue;
+
+                        var price = r.GetValueOrDefault("p", "");
+                        var listing = new StudioListing
+                        {
+                            Description = title,
+                            ListingUrl = urlStr,
+                            Address = r.GetValueOrDefault("l", "GTA, Ontario"),
+                            Source = "Craigslist",
+                            RentalCost = !string.IsNullOrWhiteSpace(price) ? price : null,
+                        };
+
+                        var imgUrl = r.GetValueOrDefault("i", "");
+                        if (imgUrl.StartsWith("http"))
+                            listing.ImageUrls.Add(imgUrl);
+
+                        listings.Add(listing);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Craigslist URL {Url} failed", url);
+                }
+            }
+
+            // Scrape detail pages
+            foreach (var listing in listings.Take(8))
+            {
+                try
+                {
+                    await ScrapeDetailPage(context, listing, debugDir, ct);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Could not scrape Craigslist detail for {Url}", listing.ListingUrl);
                 }
             }
 
@@ -418,6 +611,87 @@ public sealed class PlaywrightSearchService : ISearchService
         ];
 
         return residentialKeywords.Any(k => lower.Contains(k));
+    }
+
+    /// Returns true if the listing appears suitable for use as a photography studio.
+    /// Uses a blocklist approach: reject clearly unsuitable business types,
+    /// accept everything else from the commercial category since open commercial
+    /// spaces (warehouses, industrial units, lofts, etc.) can serve as photography studios.
+    private static bool IsPhotographySuitable(string title)
+    {
+        var lower = title.ToLowerInvariant();
+
+        // Reject very short or meaningless titles
+        if (lower.Trim().Length < 8)
+            return false;
+
+        // Reject listings that are clearly unsuitable for photography studio use
+        string[] unsuitableKeywords =
+        [
+            // Personal care / beauty
+            "hair salon", "hair studio", "beauty salon", "nail salon", "nail studio",
+            "barbershop", "barber shop", "barber studio",
+            "massage", "spa ", "esthetics", "aesthetics", "skincare",
+            "tattoo", "piercing",
+            "beauty treatment", "treatment room", "beauty studio",
+            "nails/", "/nails", "nails ", "groomer", "grooming",
+            "chair rental", "chair & room",
+            // Activity-specific studios
+            "yoga", "pilates", "dance studio", "dance school", "dance class",
+            "martial art", "boxing gym", "crossfit",
+            "acting class", "acting school", "voice over", "voiceover",
+            "music studio", "recording studio", "podcast studio",
+            "rehearsal space", "rehearsal room", "music rehearsal",
+            // Medical / professional
+            "dental", "dentist", "medical office", "clinic", "pharmacy", "optometrist",
+            "chiropract", "physiotherapy", "veterinar",
+            "law office", "law firm", "accounting", "tax office",
+            // Food & hospitality
+            "restaurant", "food truck", "bakery", "cafe ", "café", "coffee shop",
+            "food court", "food hall", "kitchen for rent", "catering",
+            "food & beverage", "food and beverage", "food processing",
+            "bar ", "pub ", "lounge", "nightclub",
+            "walkin cooler", "walk-in cooler", "walk in cooler", "walkin freezer", "walk-in freezer",
+            "cold storage",
+            // Fitness
+            "gym ", "fitness studio", "fitness centre", "fitness center",
+            // Childcare
+            "daycare", "child care", "childcare", "preschool", "montessori",
+            // Automotive
+            "auto shop", "mechanic", "car wash", "auto body", "tire shop",
+            "car dealer", "gas station", "dealer licence", "dealer license",
+            // Cannabis
+            "dispensary", "cannabis",
+            // Event-specific
+            "event space", "event venue", "banquet hall", "wedding venue", "wedding hall",
+            "party room", "party hall", "venue for rent",
+            // Specific industrial use
+            "metalworking", "welding", "machine shop", "woodworking",
+            // Storage / parking
+            "parking", "storage unit", "self storage", "mini storage",
+            "locker",
+            // Not a space (services, ads, etc.)
+            "virtual office",
+            "cabin ", "home office", "shed ",
+            "deals on now", "call today",
+            // Residential indicators
+            "for sale by owner", "open house",
+            "work&live", "live/work", "work/live", "live work",
+            // Generic shared office
+            "shared office", "co-working", "coworking",
+            // Clearly small/wrong format
+            "desk space", "hot desk", "cubicle",
+        ];
+
+        if (unsuitableKeywords.Any(k => lower.Contains(k)))
+            return false;
+
+        // Reject pure office listings (no studio/warehouse/creative/photo context)
+        if (lower.Contains("office") && !lower.Contains("studio") && !lower.Contains("warehouse")
+            && !lower.Contains("creative") && !lower.Contains("photo") && !lower.Contains("production"))
+            return false;
+
+        return true;
     }
 
     private static string ExtractAddressFromText(string? text, string postalCode)
